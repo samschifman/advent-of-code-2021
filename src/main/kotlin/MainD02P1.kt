@@ -1,10 +1,5 @@
 import java.io.File
 
-enum class Command{
-    UP, DOWN, FORWARD
-}
-
-data class CourseChange(val command: Command, val magnitude: Int)
 
 fun main(args: Array<String>) {
     println("Advent of Code Day 2 puzzle 1")
