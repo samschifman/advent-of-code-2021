@@ -46,7 +46,7 @@ class BingBoard(lines: List<String>, var columnCount: Int = 5) {
 
     private fun isRowWinner() = rows.any { it.isAllMarked() }
 
-    private fun isColumnWinner() = (0 until columnCount-1).map { isColumnWinner(it) }.contains(true)
+    private fun isColumnWinner() = (0 until columnCount).map { isColumnWinner(it) }.contains(true)
 
     private fun isColumnWinner(column: Int) = rows.map { it.isMarked(column) }.all { it }
 }
