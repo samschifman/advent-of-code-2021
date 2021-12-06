@@ -119,6 +119,20 @@ data class Line(val start: Point, val end: Point) {
 }
 
 
+class Lanternfish(var age: Int = 8) {
+
+    fun addDay(): Boolean {
+        age -= 1
+
+        return if (age < 0) {
+            age = 6
+            true
+        } else {
+            false
+        }
+    }
+}
+
 
 
 
