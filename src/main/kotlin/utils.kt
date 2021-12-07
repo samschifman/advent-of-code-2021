@@ -13,3 +13,12 @@ fun List<List<Int>>.leastCommonAt(index:Int): Int {
 }
 
 fun List<List<Int>>.filterAt(index:Int, expected:Int): List<List<Int>> = this.filter { (it[index] == expected) }
+
+fun List<Int>.median() = this.sorted().let {
+    if (it.size % 2 == 0)
+        (it[it.size / 2] + it[(it.size - 1) / 2]) / 2
+    else
+        it[it.size / 2]
+}
+
+fun Int.partialSum(): Int = (this * (this+1))/2
