@@ -21,4 +21,11 @@ fun List<Int>.median() = this.sorted().let {
         it[it.size / 2]
 }
 
+fun List<Long>.median() = this.sorted().let {
+    if (it.size % 2 == 0)
+        (it[it.size / 2] + it[(it.size - 1) / 2]) / 2
+    else
+        it[it.size / 2]
+}
+
 fun Int.partialSum(): Int = (this * (this+1))/2
