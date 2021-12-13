@@ -134,7 +134,58 @@ class Lanternfish(var age: Int = 8) {
 }
 
 
+typealias Path = List<Cave>
 
+fun Path.mostSmallVisits(): Int =
+    this.filter {
+        !it.large
+    }.map {
+        this.count { cave -> cave == it }
+    }.maxOf {
+        it
+    }
+
+
+data class Trip(val allowedVisits: Int = 1, val path: Path /* = kotlin.collections.List<Cave> */ = emptyList()) {
+    fun overVisit(cave: Cave): Boolean = !cave.large
+            && ((cave.name == "start" && path.contains(cave)) || (path.contains(cave) && path.mostSmallVisits() >= allowedVisits))
+
+    fun visit(cave: Cave): Trip = this.copy(path = path.plus(cave))
+}
+
+class Cave(val name: String) {
+    val large = name == name.uppercase()
+    val tunnels = mutableListOf<Cave>()
+
+    fun enter(trip: Trip = Trip()): List<Trip> {
+        return if (trip.overVisit(this)) {
+            emptyList()
+        } else if (name == "end") {
+            listOf(trip.visit(this))
+        } else {
+            tunnels.map {
+                it.enter(trip.visit(this))
+            }.flatten()
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Cave
+        if (name != other.name) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return name.hashCode()
+    }
+
+    override fun toString(): String {
+        return "Cave(name='$name', large=$large, tunnels=(${tunnels.map { it.name }}))"
+    }
+}
 
 
 
