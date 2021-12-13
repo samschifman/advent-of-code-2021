@@ -1,3 +1,5 @@
+enum class Direction { CENTER, UP, DOWN, RIGHT, LEFT }
+
 enum class Command {
     UP, DOWN, FORWARD
 }
@@ -187,7 +189,36 @@ class Cave(val name: String) {
     }
 }
 
+data class Fold(val direction: Direction, val line: Int) {
 
+    fun doFold(points: Set<Point>): Set<Point> = when (direction) {
+        Direction.LEFT -> points
+            .map {
+                if (it.x < line)
+                    it
+                else
+                    it.copy(x = line - (it.x - line))
+            }.toSet()
+        Direction.UP -> points
+            .map {
+                if (it.y < line)
+                    it
+                else
+                    it.copy(y = line - (it.y - line))
+            }.toSet()
+        else -> throw Exception("I don't know how to fold that way!")
+    }
+
+    companion object {
+        fun fromInstruction(text: String): Fold {
+            val parts = text.split("=")
+            return Fold(
+                direction = if (parts[0].endsWith("x")) Direction.LEFT else Direction.UP,
+                line = parts[1].toInt()
+            )
+        }
+    }
+}
 
 
 

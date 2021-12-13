@@ -1,6 +1,5 @@
 import java.io.File
 
-private enum class Direction { CENTER, UP, DOWN, RIGHT, LEFT }
 
 val checkedSet = mutableSetOf<Point>()
 
