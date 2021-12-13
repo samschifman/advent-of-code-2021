@@ -36,7 +36,7 @@ fun main(args: Array<String>) {
         .toSet()
 
 
-    val foulds = File(pathname)
+    val folds = File(pathname)
         .readLines()
         .filter {
             it.isNotBlank() && it.startsWith("fold")
@@ -45,7 +45,7 @@ fun main(args: Array<String>) {
             Fold.fromInstruction(it)
         }
 
-    foulds.forEach { points = it.doFold(points) }
+    folds.forEach { points = it.doFold(points) }
 
     val remaining = points.size
 

@@ -21,7 +21,7 @@ fun main(args: Array<String>) {
         .toSet()
 
 
-    val foulds = File(pathname)
+    val folds = File(pathname)
         .readLines()
         .filter {
             it.isNotBlank() && it.startsWith("fold")
@@ -30,7 +30,7 @@ fun main(args: Array<String>) {
             Fold.fromInstruction(it)
         }
 
-    val remaining = foulds[0].doFold(points).size
+    val remaining = folds[0].doFold(points).size
 
     println("Number of visible dots is ${remaining}")
 }
