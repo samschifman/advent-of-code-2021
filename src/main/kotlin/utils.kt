@@ -29,3 +29,18 @@ fun List<Long>.median() = this.sorted().let {
 }
 
 fun Int.partialSum(): Int = (this * (this+1))/2
+
+
+fun <Point> List<Pair<Point, Point>>.getUniqueValuesFromPairs(): Set<Point> = this
+    .map { (a, b) -> listOf(a, b) }
+    .flatten()
+    .toSet()
+
+fun <Point> List<Pair<Point, Point>>.getUniqueValuesFromPairs(predicate: (Point) -> Boolean): Set<Point> = this
+    .map { (a, b) -> listOf(a, b) }
+    .flatten()
+    .filter(predicate)
+    .toSet()
+
+
+fun List<Int>.incDigits(step:Int = 1) = this.map { if (it + step > 9) (it + step) - 9 else it + step }

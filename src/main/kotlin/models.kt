@@ -1,3 +1,6 @@
+import java.util.*
+
+
 enum class Direction { CENTER, UP, DOWN, RIGHT, LEFT }
 
 enum class Command {
@@ -66,6 +69,25 @@ data class Point(val x: Int, val y: Int) {
     fun isAfterOrSame(point: Point): Boolean = (point.x <= x || point.y <= y)
     fun isBefore(point: Point): Boolean = (point.x > x || point.y > y)
     fun isBeforeOrSame(point: Point): Boolean = (point.x >= x || point.y >= y)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Point
+
+        if (x != other.x) return false
+        if (y != other.y) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x
+        result = 31 * result + y
+        return result
+    }
+
 
 }
 
@@ -220,7 +242,92 @@ data class Fold(val direction: Direction, val line: Int) {
     }
 }
 
+data class Graph<Point>(
+    val vertices: Set<Point>,
+    val edges: Map<Point, Set<Point>>,
+    val weights: Map<Pair<Point, Point>, Int>
+) {
+    constructor(weights: Map<Pair<Point, Point>, Int>): this(
+        vertices = weights.keys.toList().getUniqueValuesFromPairs(),
+        edges = weights.keys
+            .groupBy { it.first }
+            .mapValues { it.value.getUniqueValuesFromPairs { x -> x !== it.key } }
+            .withDefault { emptySet() },
+        weights = weights
+    )
+}
 
+fun <Point> dijkstra(graph: Graph<Point>, start: Point): Map<Point, Point?> {
+    val S: MutableSet<Point> = mutableSetOf() // a subset of vertices, for which we know the true distance
+
+    /*
+     * delta represents the length of the shortest distance paths
+     * from start to v, for v in vertices.
+     *
+     * The values are initialized to infinity, as we'll be getting the key with the min value
+     */
+    val delta = graph.vertices.map { it to Int.MAX_VALUE }.toMap().toMutableMap()
+    delta[start] = 0
+
+    val previous: MutableMap<Point, Point?> = graph.vertices.map { it to null }.toMap().toMutableMap()
+
+    while (S != graph.vertices) {
+        // let v be the closest vertex that has not yet been visited
+        val v: Point = delta
+            .filter { !S.contains(it.key) }
+            .minByOrNull {
+                it.value
+            }!!
+            .key
+
+        graph.edges.getValue(v).minus(S).forEach { neighbor ->
+            val newPath = delta.getValue(v) + graph.weights.getValue(Pair(v, neighbor))
+
+            if (newPath < delta.getValue(neighbor)) {
+                delta[neighbor] = newPath
+                previous[neighbor] = v
+            }
+        }
+
+        S.add(v)
+    }
+
+    return previous.toMap()
+}
+
+fun <Point> shortestPath(shortestPathTree: Map<Point, Point?>, start: Point, end: Point): List<Point> {
+    fun pathTo(start: Point, end: Point): List<Point> {
+        if (shortestPathTree[end] == null) return listOf(end)
+        return listOf(pathTo(start, shortestPathTree[end]!!), listOf(end)).flatten()
+    }
+
+    return pathTo(start, end)
+}
+
+
+fun addToMap(grid: List<List<Int>>, point: Point, graphMap: MutableMap<Pair<Point, Point>, Int>, direction: Direction = Direction.CENTER) {
+    fun addNeighbor(x: Int, y: Int, direction: Direction) {
+        val otherPoint = Point(x, y)
+        if (!graphMap.containsKey(point to otherPoint)) {
+            graphMap[point to otherPoint] = grid[y][x]
+            if (direction == Direction.CENTER) {
+                addToMap(grid, otherPoint, graphMap, direction)
+            }
+        }
+    }
+    if (point.x - 1 >= 0 && direction != Direction.LEFT) {
+        addNeighbor(point.x - 1, point.y, Direction.LEFT)
+    }
+    if (point.y - 1 >= 0 && direction != Direction.DOWN) {
+        addNeighbor(point.x, point.y - 1, Direction.DOWN)
+    }
+    if (point.x + 1 < grid[0].size) {
+        addNeighbor(point.x + 1, point.y, direction)
+    }
+    if (point.y + 1 < grid.size) {
+        addNeighbor(point.x, point.y + 1, direction)
+    }
+}
 
 
 
