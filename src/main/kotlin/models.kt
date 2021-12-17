@@ -434,3 +434,35 @@ class OpperatorPacket(version: Int, type: Int, val contents: List<Packet>) : Pac
         else -> throw Exception("Unknown function")
     } + ") "
 }
+
+class Probe(var vx: Int, var vy: Int) {
+
+    private fun move(position: Point): Point {
+        val next = position.copy(x = position.x + vx, y = position.y + vy)
+
+        vx = if (vx == 0) 0 else if (vx < 0) vx + 1 else vx - 1
+        vy -= 1
+
+        return next;
+    }
+
+    private fun miss(position: Point, lowerRight: Point): Boolean =
+        position.x > lowerRight.x || position.y < lowerRight.y
+
+    fun fire(target: List<Point>): List<Point> {
+        var position = Point(0, 0)
+        val tragetory = mutableListOf(position)
+
+        val lowerRight = Point(target.map { it.x }.maxOf { it }, target.map { it.y }.minOf { it })
+
+        while (!target.contains(position)) {
+            position = move(position)
+            tragetory.add(position)
+            if (miss(position, lowerRight)) {
+                return emptyList()
+            }
+        }
+
+        return tragetory
+    }
+}
