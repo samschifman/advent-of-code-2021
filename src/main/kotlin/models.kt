@@ -1,3 +1,4 @@
+import java.math.BigInteger
 import java.util.*
 
 
@@ -330,10 +331,106 @@ fun addToMap(grid: List<List<Int>>, point: Point, graphMap: MutableMap<Pair<Poin
 }
 
 
+abstract class Packet(val version: Int, val type: Int) {
 
+    open fun totalVersions(): Int = this.version
+    abstract fun value(): Long
+    abstract fun printEquation(): String
 
+    companion object {
+        fun parsePacket(byteArray: List<String>): Pair<Int, Packet> {
+            var take = 0
+            var remainingBytes = byteArray
+            val version = BigInteger(remainingBytes.take(3).joinToString(""), 2).toInt()
+            remainingBytes = remainingBytes.drop(3)
+            take += 3
+            val type = BigInteger(remainingBytes.take(3).joinToString(""), 2).toInt()
+            remainingBytes = remainingBytes.drop(3)
+            take += 3
 
+            return if (type == 4) {
+                var done = false
+                var contents = mutableListOf<String>()
+                while (!done) {
+                    done = remainingBytes[0] == "0"
+                    remainingBytes = remainingBytes.drop(1)
+                    take++
+                    val digit = remainingBytes.take(4)
+                    remainingBytes = remainingBytes.drop(4)
+                    take += 4
+                    contents.add(digit.joinToString(""))
+                }
+                take to LiteralPacket(version, BigInteger(contents.joinToString(""), 2).toLong())
+            } else {
+                val lengthIndicator = remainingBytes.take(1).first()
+                remainingBytes = remainingBytes.drop(1)
+                take += 1
+                val length = if (lengthIndicator.toInt() == 0) 15 else 11
 
+                val contents = mutableListOf<Packet>()
+                if (lengthIndicator.toInt() == 0) {
+                    val numberPacketBytes = BigInteger(remainingBytes.take(15).joinToString(""), 2).toInt()
+                    remainingBytes = remainingBytes.drop(15)
+                    take += 15
+                    var subPacketBytes = remainingBytes.take(numberPacketBytes)
+                    take += numberPacketBytes
 
+                    while (subPacketBytes.isNotEmpty() && subPacketBytes.contains("1")) {
+                        val nextPacket = parsePacket(subPacketBytes)
+                        subPacketBytes = subPacketBytes.drop(nextPacket.first)
+                        contents.add(nextPacket.second)
+                    }
+                } else {
+                    val numberOfPacket = BigInteger(remainingBytes.take(11).joinToString(""), 2).toInt()
+                    remainingBytes = remainingBytes.drop(11)
+                    take += 11
 
+                    var i = 0
+                    while (i++ < numberOfPacket && remainingBytes.isNotEmpty() && remainingBytes.contains("1")) {
+                        val nextPacket = parsePacket(remainingBytes)
+                        remainingBytes = remainingBytes.drop(nextPacket.first)
+                        take += nextPacket.first
+                        contents.add(nextPacket.second)
+                    }
 
+                    if (numberOfPacket != contents.size) {
+                        println("WARING: expected $numberOfPacket and got ${contents.size} sub-packets")
+                    }
+                }
+                take to OpperatorPacket(version, type, contents)
+            }
+        }
+    }
+}
+
+class LiteralPacket(version: Int, val contents: Long) : Packet(version, 4) {
+    override fun value(): Long = contents
+    override fun printEquation(): String = contents.toString()
+}
+
+class OpperatorPacket(version: Int, type: Int, val contents: List<Packet>) : Packet(version, type) {
+
+    override fun totalVersions(): Int = this.contents.sumOf { it.totalVersions() } + this.version
+
+    override fun value(): Long = when (type) {
+        0 -> contents.sumOf { it.value() }
+        1 -> contents.map { it.value() }.reduce { acc, l -> acc * l }
+        2 -> contents.minOf { it.value() }
+        3 -> contents.maxOf { it.value() }
+        5 -> if (contents[0].value() > contents[1].value()) 1 else 0
+        6 -> if (contents[0].value() < contents[1].value()) 1 else 0
+        7 -> if (contents[0].value() == contents[1].value()) 1 else 0
+        else -> throw Exception("Unknown function")
+    }
+
+    override fun printEquation(): String = " (" + when (type) {
+        0 -> contents.joinToString(" + ") { it.printEquation() }
+        1 -> contents.joinToString(" * ") { it.printEquation() }
+        2 -> "minOF[" + contents.joinToString(", ") { it.printEquation() } + "]"
+        3 -> "maxOF[" + contents.joinToString(", ") { it.printEquation() } + "]"
+        5 -> contents[0].printEquation() + " > " + contents[1].printEquation()
+        6 -> contents[0].printEquation() + " < " + contents[1].printEquation()
+        7 -> contents[0].printEquation() + " = " + contents[1].printEquation()
+        else -> throw Exception("Unknown function")
+    } + ") "
+}
